@@ -1,7 +1,7 @@
 package = "iovec"
 version = "scm-1"
 source = {
-    url = "git://github.com/mah0x211/lua-iovec.git"
+    url = "gitrec://github.com/mah0x211/lua-iovec.git"
 }
 description = {
     summary = "vectored I/O module",
