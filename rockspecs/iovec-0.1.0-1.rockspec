@@ -1,7 +1,7 @@
 package = "iovec"
 version = "0.1.0-1"
 source = {
-    url = "git://github.com/mah0x211/lua-iovec.git",
+    url = "gitrec://github.com/mah0x211/lua-iovec.git",
     tag = "v0.1.0"
 }
 description = {
