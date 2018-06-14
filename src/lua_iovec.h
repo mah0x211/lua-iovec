@@ -1,5 +1,5 @@
-/*
- *  Copyright (C) 2018 Masatoshi Teruya
+/**
+ *  Copyright (C) 2018 Masatoshi Fukunaga
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -46,16 +46,124 @@
 #define IOVEC_MT    "iovec"
 
 typedef struct {
-    int nvec;
-    int used;
-    size_t bytes;
-    struct iovec *data;
-    int *refs;
-    size_t *lens;
+    size_t nbyte;
+    lua_State *th;
+    int ref;
 } lua_iovec_t;
 
 
 LUALIB_API int luaopen_iovec( lua_State *L );
+
+/**
+ * lua_iovec_setv sets the buffers that held by *iov to *vec. *nvec must be set
+ * to length of *vec, and if it is NULL or 0, it will return 0 without changing
+ * anything.
+ * offset specifies the starting position of the buffer.　if it is greater than
+ * or equal to the number of bytes held by *iov, it returns 0 without changing
+ * anything.
+ * nbyte specifies the number of bytes to be set for *vec. if it is 0, it
+ * returns 0 without changing anything.
+ */
+static inline size_t lua_iovec_setv( lua_iovec_t *iov, struct iovec *vec,
+                                     int *nvec, size_t offset, size_t nbyte )
+{
+    int nv = 0;
+    size_t nb = 0;
+    int maxnvec = 0;
+    int top = lua_gettop( iov->th );
+    int i = 1;
+
+    if( !nvec || *nvec <= 0 || offset >= iov->nbyte || !nbyte ){
+        return 0;
+    }
+    maxnvec = *nvec;
+
+    // skip offset bytes from the beginning
+    for(; offset && i <= top; i++ )
+    {
+        struct iovec *v = &vec[nv];
+        char *data = lua_touserdata( iov->th, i );
+        size_t len = strlen( data );
+
+        if( offset >= len ){
+            offset -= len;
+            continue;
+        }
+
+        data += offset;
+        len -= offset;
+        offset = 0;
+        v->iov_base = data;
+        if( nbyte >= len ){
+            v->iov_len = len;
+            nbyte -= len;
+        }
+        else {
+            v->iov_len = nbyte;
+            nbyte = 0;
+        }
+        nb += v->iov_len;
+        nv++;
+    }
+
+    for(; nv < maxnvec && nbyte && i <= top; i++ )
+    {
+        struct iovec *v = &vec[nv];
+        char *data = lua_touserdata( iov->th, i );
+        size_t len = strlen( data );
+
+        v->iov_base = data;
+        if( nbyte >= len ){
+            v->iov_len = len;
+            nbyte -= len;
+        }
+        else {
+            v->iov_len = nbyte;
+            nbyte = 0;
+        }
+        nb += v->iov_len;
+        nv++;
+    }
+
+    *nvec = nv;
+
+    return nb;
+}
+
+static inline int lua_iovec_writev( lua_State *L, int fd, lua_iovec_t *iov,
+                                    size_t offset, size_t nbyte )
+{
+    struct iovec vec[IOV_MAX];
+    int nvec = IOV_MAX;
+    size_t nb = lua_iovec_setv( iov, vec, &nvec, offset, nbyte );
+    ssize_t rv = writev( fd, vec, nvec );
+
+    switch( rv )
+    {
+        // got error
+        case -1:
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushinteger( L, 0 );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // closed by peer
+            else if( errno == EPIPE || errno == ECONNRESET ){
+                return 0;
+            }
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, rv );
+            lua_pushnil( L );
+            lua_pushboolean( L, nb - (size_t)rv );
+            return 3;
+    }
+}
 
 
 #endif
