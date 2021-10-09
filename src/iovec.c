@@ -27,6 +27,15 @@
 
 #include "lua_iovec.h"
 
+static int readv_lua( lua_State *L )
+{
+    lua_iovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+    int fd = lauxh_checkinteger( L, 2 );
+    uint64_t offset = lauxh_optuint64( L, 3, 0 );
+    uint64_t nb = lauxh_optuint64( L, 4, iov->nbyte );
+
+    return lua_iovec_readv( L, fd, iov, offset, nb );
+}
 
 static int writev_lua( lua_State *L )
 {
@@ -357,6 +366,7 @@ LUALIB_API int luaopen_iovec( lua_State *L )
             { "concat", concat_lua },
             { "consume", consume_lua },
             { "writev", writev_lua },
+            { "readv", readv_lua },
             { NULL, NULL }
         };
         struct luaL_Reg *ptr = mmethod;
@@ -385,4 +395,3 @@ LUALIB_API int luaopen_iovec( lua_State *L )
 
     return 1;
 }
-

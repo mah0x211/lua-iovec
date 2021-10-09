@@ -166,5 +166,37 @@ static inline int lua_iovec_writev( lua_State *L, int fd, lua_iovec_t *iov,
 }
 
 
-#endif
+static inline int lua_iovec_readv( lua_State *L, int fd, lua_iovec_t *iov,
+                                   size_t offset, size_t nbyte )
+{
+    struct iovec vec[IOV_MAX];
+    int nvec = IOV_MAX;
+    size_t nb = lua_iovec_setv( iov, vec, &nvec, offset, nbyte );
+    ssize_t rv = readv( fd, vec, nvec );
 
+    switch( rv )
+    {
+        // closed by peer
+        case 0:
+            return 0;
+
+        // got error
+        case -1:
+            lua_pushnil( L );
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, rv );
+            return 1;
+    }
+}
+
+
+#endif
