@@ -1,14 +1,15 @@
 rockspec_format = "3.0"
 package = "iovec"
-version = "scm-1"
+version = "0.2.0-1"
 source = {
     url = "git+https://github.com/mah0x211/lua-iovec.git"
+    tag = "v0.2.0"
 }
 description = {
     summary = "vectored I/O module",
     homepage = "https://github.com/mah0x211/lua-iovec",
     license = "MIT/X11",
-    maintainer = "Masatoshi Teruya"
+    maintainer = "Masatoshi Fukunaga"
 }
 dependencies = {
     "lua >= 5.1",

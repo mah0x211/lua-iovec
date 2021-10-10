@@ -7,7 +7,6 @@ Vectored I/O module
 
 ## Dependencies
 
-- luarocks-fetch-gitrec: <https://github.com/siffiejoe/luarocks-fetch-gitrec>
 - lauxhlib: <https://github.com/mah0x211/lauxhlib>
 
 
@@ -24,69 +23,61 @@ $ luarocks install iovec --from=http://mah0x211.github.io/rocks/
 
 ## Functions
 
-### iov, err = iovec.new( [nvec] )
+### iov = iovec.new()
 
 create an instance of iovec.
 
 **NOTE:** iovec can hold maximum [IOV_MAX](#constants) elements.
 
-- **Parameters**
-    - `nvec:number`: number of vector.
 - **Returns**
     - `iov:iovec`: instance of [iovec](#iovec-instance-methods).
-    - `err:string`: error string.
 
 
 ## iovec Instance Methods
 
 `iovec` instance has following methods.
 
-### bytes = iov:bytes()
+### nbyte = iov:bytes()
 
 get a number of bytes used.
 
 - **Returns**
-    - `bytes:number`: number of bytes used.
+    - `nbyte:integer`: number of bytes used.
 
-
-### bytes = iov:consume( bytes )
-
-delete the specified number of bytes of data.
-
-- **Parameters**
-    - `bytes:number`: number of bytes.
-- **Returns**
-    - `bytes:number`: number of bytes used.
-
-
-### str = iov:concat()
-
-concatenate all data of elements in use into a string.
-
-- **Returns**
-    - `str:string`: string.
-
-
-### idx, err = iov:add( str )
+### ok, idx, err = iov:add( str )
 
 add an element with specified string.
 
 - **Parameters**
     - `str:string`: string.
 - **Returns**
-    - `idx:number`: index number of added element.
-    - `err:string`: error string.
+    - `ok:boolean`: `true` on success, `false` on `str` length is 0, or no buffer space available.
+    - `idx:integer`: index number of added element.
+    - `err:string`: error string if stack memory cannot be increased.
 
 
-### idx, err = iov:addn( bytes )
+### ok, idx, err = iov:addn( nbyte )
 
 add an element that size of specified number of bytes.
 
 - **Parameters**
-    - `bytes:number`: number of bytes.
+    - `nbyte:integer`: number of bytes.
 - **Returns**
-    - `idx:number`: index number of added element.
-    - `err:string`: error string.
+    - `ok:boolean`: `true` on success, `false` on no buffer space available.
+    - `idx:integer`: index number of added element.
+    - `err:string`: error string if stack memory cannot be increased.
+
+
+### ok, err = iov:set( str, idx )
+
+replace a string of element at specified index.
+
+- **Parameters**
+    - `str:string`: string.
+    - `idx:integer`: index of element.
+- **Returns**
+    - `ok:boolean`: `true` on success, `false` on the specified index does not exist.
+    - `err:string`: error string if stack memory cannot be increased.
 
 
 ### str = iov:get( idx )
@@ -94,45 +85,71 @@ add an element that size of specified number of bytes.
 get a string of element at specified index.
 
 - **Parameters**
-    - `idx:number`: index of element.
+    - `idx:integer`: index of element.
 - **Returns**
     - `str:string`: string of element.
 
 
-### ok = iov:set( str, idx )
-
-replace a string of element at specified index.
-
-- **Parameters**
-    - `str:string`: string.
-    - `idx:number`: index of element.
-- **Returns**
-    - `ok:boolean`: if the specified index does not exist, it returns `false`.
-
-
-### str, midx = iov:del( idx )
+### str, err = iov:del( idx )
 
 delete an element at specified index.
 
 - **Parameters**
-    - `idx:number`: index of element.
+    - `idx:integer`: index of element.
 - **Returns**
     - `str:string`: string of deleted element.
-    - `midx:number`: index of moved element.
+    - `err:string`: error string if stack memory cannot be increased.
 
 
+### str, err = iov:concat( [offset, [, nbyte]])
 
-### len, err, again = iov:writev( fd [, offset] )
+concatenate all data of elements in use into a string.
+
+- **Parameters**
+    - `offset:integer`: where to begin in the data.
+    - `nbyte:integer`: number of bytes concat.
+- **Returns**
+    - `str:string`: string.
+    - `err:string`: error string if stack memory cannot be increased.
+
+
+### nbyte = iov:consume( nbyte )
+
+delete the specified number of bytes of data.
+
+- **Parameters**
+    - `nbyte:integer`: number of bytes.
+- **Returns**
+    - `nbyte:integer`: number of bytes used.
+
+
+### nbyte, err, again = iov:writev( fd [, offset, [, nbyte]] )
 
 write iovec messages at once to fd.
 
 - **Parameters**
-    - `fd:number`: file descriptor.
-    - `offset:numbger`: offset at which the output operation is to be performed.
+    - `fd:integer`: file descriptor.
+    - `offset:integer`: start position of the data to be sent.
+    - `nbyte:integer`: number of bytes to send.
 - **Returns**
-    - `len:number`: the number of bytes sent.
+    - `nbyte:integer`: the number of bytes sent.
     - `err:string`: error string.
-    - `again:bool`: true if all data has not been sent.
+    - `again:bool`: `true` if all data has not been sent.
 
 **NOTE:** all return values will be nil if closed by peer.
 
+
+### nbyte, err, again = iov:readv( fd [, offset, [, nbyte]] )
+
+read the messages from fd into iovec.
+
+- **Parameters**
+    - `fd:integer`: file descriptor.
+    - `offset:integer`: insertion position of received data.
+    - `nbyte:integer`: maximum number of bytes to be received.
+- **Returns**
+    - `nbyte:integer`: the number of bytes received.
+    - `err:string`: error string.
+    - `again:bool`: `true` if all data has not been sent.
+
+**NOTE:** all return values will be nil if closed by peer.
