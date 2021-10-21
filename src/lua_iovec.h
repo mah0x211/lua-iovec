@@ -162,9 +162,10 @@ static inline int lua_iovec_readv(lua_State *L, int fd, lua_iovec_t *iov,
 {
     struct iovec vec[IOV_MAX];
     int nvec   = IOV_MAX;
-    size_t nb  = lua_iovec_setv(iov, vec, &nvec, offset, nbyte);
-    ssize_t rv = readv(fd, vec, nvec);
+    ssize_t rv = 0;
 
+    lua_iovec_setv(iov, vec, &nvec, offset, nbyte);
+    rv = readv(fd, vec, nvec);
     switch (rv) {
     // closed by peer
     case 0:
