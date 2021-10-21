@@ -1,5 +1,7 @@
 # lua-iovec
 
+[![test](https://github.com/mah0x211/lua-iovec/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-iovec/actions/workflows/test.yml)
+
 Vectored I/O module
 
 **NOTE: Do not use this module.  this module is under heavy development.**
