@@ -120,14 +120,14 @@ static int concat_lua(lua_State *L)
         char *data = lua_touserdata(iov->th, i);
         size_t len = strlen(data);
 
-        if (offset >= len) {
+        if ((size_t)offset >= len) {
             offset -= len;
             continue;
         }
         data += offset;
         len -= offset;
         offset = 0;
-        if (nb >= len) {
+        if ((size_t)nb >= len) {
             nb -= len;
             lua_pushlstring(L, data, len);
         } else {
@@ -141,7 +141,7 @@ static int concat_lua(lua_State *L)
         char *data = lua_touserdata(iov->th, i);
         size_t len = strlen(data);
 
-        if (nb >= len) {
+        if ((size_t)nb >= len) {
             nb -= len;
             lua_pushlstring(L, data, len);
         } else {
