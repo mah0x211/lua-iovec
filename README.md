@@ -4,7 +4,7 @@
 
 Vectored I/O module
 
-**NOTE: Do not use this module.  this module is under heavy development.**
+**NOTE: Do not use this module. this module is under heavy development.**
 
 
 ## Dependencies
@@ -31,32 +31,40 @@ create an instance of iovec.
 
 **NOTE:** iovec can hold maximum [IOV_MAX](#constants) elements.
 
-- **Returns**
-    - `iov:iovec`: instance of [iovec](#iovec-instance-methods).
+**Returns**
+
+- `iov:iovec`: instance of [iovec](#iovec-instance-methods).
 
 
 ## iovec Instance Methods
 
 `iovec` instance has following methods.
 
+
 ### nbyte = iov:bytes()
 
 get a number of bytes used.
 
-- **Returns**
-    - `nbyte:integer`: number of bytes used.
+**Returns**
 
-### ok, idx, err = iov:add( str )
+- `nbyte:integer`: number of bytes used.
+
+
+### idx, err = iov:add( str )
 
 add an element with specified string.
 
-- **Parameters**
-    - `str:string`: string.
-- **Returns**
-    - `ok:boolean`: `true` on success, `false` on `str` length is 0, or no buffer space available.
-    - `idx:integer`: index number of added element.
-    - `err:string`: error string if stack memory cannot be increased.
+**Parameters**
 
+- `str:string`: string.
+
+**Returns**
+
+- `idx:integer`: positive index number of added element. or the following negative index number;
+  - `-1`: no buffer space available
+  - `-2`: stack memory cannot be increased
+  - `-3`: empty string cannot be added
+- `err:string`: error string.
 
 ### ok, idx, err = iov:addn( nbyte )
 

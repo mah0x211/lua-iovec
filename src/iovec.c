@@ -260,14 +260,18 @@ static int add_lua(lua_State *L)
     int top          = lua_gettop(iov->th);
     char *data       = NULL;
 
-    if (len == 0 || top >= IOV_MAX) {
-        lua_pushboolean(L, 0);
-        return 1;
+    if (len == 0) {
+        lua_pushinteger(L, -3);
+        lua_pushstring(L, strerror(EINVAL));
+        return 2;
+    } else if (top >= IOV_MAX) {
+        lua_pushinteger(L, -1);
+        lua_pushstring(L, strerror(ENOBUFS));
+        return 2;
     } else if (!lua_checkstack(iov->th, 1)) {
-        lua_pushboolean(L, 0);
-        lua_pushinteger(L, 0);
+        lua_pushinteger(L, -2);
         lua_pushstring(L, strerror(ENOMEM));
-        return 3;
+        return 2;
     }
 
     // create data filled with string argument
@@ -275,10 +279,9 @@ static int add_lua(lua_State *L)
     memcpy(data, str, len);
     data[len] = 0;
     iov->nbyte += len;
-    lua_pushboolean(L, 1);
     lua_pushinteger(L, top + 1);
 
-    return 2;
+    return 1;
 }
 
 static int bytes_lua(lua_State *L)
