@@ -63,23 +63,23 @@ function testcase.iovec_addn()
     local v = iovec.new()
 
     -- test that add 3-byte buffer string
-    local ok, idx = v:addn(3)
-    assert.is_true(ok)
+    local idx, err = v:addn(3)
+    assert(not err, err)
     assert.equal(idx, 1)
     assert.equal(#v, 1)
     assert.equal(v:bytes(), 3)
     assert.equal(#v:get(idx), 3)
 
     -- test that add 9-byte buffer string
-    ok, idx = v:addn(9)
-    assert.is_true(ok)
+    idx, err = v:addn(9)
+    assert(not err, err)
     assert.equal(idx, 2)
     assert.equal(#v, 2)
     assert.equal(v:bytes(), 12)
     assert.equal(#v:get(idx), 9)
 
     -- test that error occurs with n<=0
-    local err = assert.throws(function()
+    err = assert.throws(function()
         v:addn(0)
     end)
     assert.match(err, 'got less than 1')
@@ -91,10 +91,12 @@ function testcase.iovec_addn()
     assert.match(err, 'number expected, ')
 
     -- test that returns false if no buffer space available
-    local nbyte = v:bytes()
-    for _ = 1, iovec.IOV_MAX do
-        ok = v:addn(1)
-        if ok then
+    local nbyte = 0
+    v = iovec.new()
+    for i = 1, iovec.IOV_MAX do
+        idx = v:addn(1)
+        if idx > 0 then
+            assert.equal(idx, i)
             nbyte = nbyte + 1
         else
             assert.equal(#v, iovec.IOV_MAX)
