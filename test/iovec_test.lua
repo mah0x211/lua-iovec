@@ -16,39 +16,41 @@ function testcase.iovec_add()
     local v = iovec.new()
 
     -- test that add the string 'foo'
-    local ok, idx = v:add('foo')
-    assert.is_true(ok)
+    local idx, err = v:add('foo')
+    assert(not err, err)
     assert.equal(idx, 1)
     assert.equal(#v, 1)
     assert.equal(v:bytes(), 3)
     assert.equal(v:get(idx), 'foo')
 
     -- test that add the string 'bar'
-    ok, idx = v:add('bar')
-    assert.is_true(ok)
+    idx, err = v:add('bar')
+    assert(not err, err)
     assert.equal(idx, 2)
     assert.equal(#v, 2)
     assert.equal(v:bytes(), 6)
     assert.equal(v:get(idx), 'bar')
 
     -- test that returns false if argument is empty-string
-    ok, idx = v:add('')
-    assert.is_false(ok)
-    assert.is_nil(idx)
+    idx, err = v:add('')
+    assert.equal(idx, -3)
+    assert(err, 'iov:add() did not returns error')
     assert.equal(#v, 2)
     assert.equal(v:bytes(), 6)
 
     -- test that error occurs with non-string argument
-    local err = assert.throws(function()
+    err = assert.throws(function()
         v:add(1)
     end)
     assert.match(err, 'string expected, ')
 
     -- test that returns false if no buffer space available
-    local nbyte = v:bytes()
-    for _ = 1, iovec.IOV_MAX do
-        ok = v:add('a')
-        if ok then
+    local nbyte = 0
+    v = iovec.new()
+    for i = 1, iovec.IOV_MAX do
+        idx = v:add('a')
+        if idx > 0 then
+            assert.equal(idx, i)
             nbyte = nbyte + 1
         else
             assert.equal(#v, iovec.IOV_MAX)
@@ -61,23 +63,23 @@ function testcase.iovec_addn()
     local v = iovec.new()
 
     -- test that add 3-byte buffer string
-    local ok, idx = v:addn(3)
-    assert.is_true(ok)
+    local idx, err = v:addn(3)
+    assert(not err, err)
     assert.equal(idx, 1)
     assert.equal(#v, 1)
     assert.equal(v:bytes(), 3)
     assert.equal(#v:get(idx), 3)
 
     -- test that add 9-byte buffer string
-    ok, idx = v:addn(9)
-    assert.is_true(ok)
+    idx, err = v:addn(9)
+    assert(not err, err)
     assert.equal(idx, 2)
     assert.equal(#v, 2)
     assert.equal(v:bytes(), 12)
     assert.equal(#v:get(idx), 9)
 
     -- test that error occurs with n<=0
-    local err = assert.throws(function()
+    err = assert.throws(function()
         v:addn(0)
     end)
     assert.match(err, 'got less than 1')
@@ -89,10 +91,12 @@ function testcase.iovec_addn()
     assert.match(err, 'number expected, ')
 
     -- test that returns false if no buffer space available
-    local nbyte = v:bytes()
-    for _ = 1, iovec.IOV_MAX do
-        ok = v:addn(1)
-        if ok then
+    local nbyte = 0
+    v = iovec.new()
+    for i = 1, iovec.IOV_MAX do
+        idx = v:addn(1)
+        if idx > 0 then
+            assert.equal(idx, i)
             nbyte = nbyte + 1
         else
             assert.equal(#v, iovec.IOV_MAX)
@@ -108,8 +112,8 @@ function testcase.iovec_set()
         'bar',
         'baz',
     }) do
-        local ok, _, err = v:add(s)
-        assert(ok, err)
+        local _, err = v:add(s)
+        assert(not err, err)
     end
 
     -- test that replace existing value with new value
@@ -147,8 +151,8 @@ function testcase.iovec_get()
         'bar',
         'baz',
     }) do
-        local ok, idx, err = v:add(s)
-        assert(ok, err)
+        local idx, err = v:add(s)
+        assert(not err, err)
 
         -- test that returns a value
         assert.equal(v:get(idx), s)
@@ -177,8 +181,8 @@ function testcase.iovec_del()
         'bar',
         'baz',
     }) do
-        local ok, _, err = v:add(s)
-        assert(ok, err)
+        local _, err = v:add(s)
+        assert(not err, err)
     end
 
     -- test that returns nil if index is out of range
@@ -222,8 +226,8 @@ function testcase.iovec_concat()
         'bar',
         'baz',
     }) do
-        local ok, _, err = v:add(s)
-        assert(ok, err)
+        local _, err = v:add(s)
+        assert(not err, err)
     end
     assert.equal(v:concat(), 'foobarbaz')
 
@@ -244,8 +248,8 @@ function testcase.iovec_consume()
         'bar',
         'baz',
     }) do
-        local ok, _, err = v:add(s)
-        assert(ok, err)
+        local _, err = v:add(s)
+        assert(not err, err)
     end
 
     -- test that consume 0-byte
@@ -276,8 +280,8 @@ function testcase.iovec_writev()
         'bar',
         'baz',
     }) do
-        local ok, _, err = v:add(s)
-        assert(ok, err)
+        local _, err = v:add(s)
+        assert(not err, err)
     end
 
     local r, w, err = pipe()
@@ -375,8 +379,8 @@ function testcase.iovec_readv()
         'baz',
         'qux',
     }) do
-        local ok, _, err = v:addn(#s)
-        assert(ok, err)
+        local _, err = v:addn(#s)
+        assert(not err, err)
     end
 
     local r, w, err = pipe()
