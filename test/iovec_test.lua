@@ -3,7 +3,6 @@ require('nosigpipe')
 local pipe = require('pipe')
 local iovec = require('iovec')
 local testcase = require('testcase')
-local assert = require('assertex')
 
 function testcase.new()
     -- test that returns an instance of iovec
