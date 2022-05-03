@@ -58,7 +58,6 @@ static inline void lua_iovec_loadlib(lua_State *L)
     if (lua_isnil(L, -1)) {
         luaL_loadstring(L, "require('iovec')");
         lua_call(L, 0, 0);
-        lua_error(L);
     }
     lua_settop(L, top);
 }
