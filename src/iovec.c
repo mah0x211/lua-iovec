@@ -29,22 +29,75 @@
 
 static int readv_lua(lua_State *L)
 {
-    lua_iovec_t *iov = lauxh_checkudata(L, 1, IOVEC_MT);
-    int fd           = lauxh_checkinteger(L, 2);
-    uint64_t offset  = lauxh_optuint64(L, 3, 0);
-    uint64_t nb      = lauxh_optuint64(L, 4, iov->nbyte);
+    lua_iovec_t *iov          = lauxh_checkudata(L, 1, IOVEC_MT);
+    int fd                    = lauxh_checkinteger(L, 2);
+    uint64_t offset           = lauxh_optuint64(L, 3, 0);
+    uint64_t nb               = lauxh_optuint64(L, 4, 0);
+    struct iovec vec[IOV_MAX] = {0};
+    int nvec                  = IOV_MAX;
+    ssize_t rv                = 0;
 
-    return lua_iovec_readv(L, fd, iov, offset, nb);
+    lua_iovec_setv(iov, vec, &nvec, offset, nb);
+    rv = readv(fd, vec, nvec);
+    switch (rv) {
+    // closed by peer
+    case 0:
+        return 0;
+
+    // got error
+    case -1:
+        lua_pushnil(L);
+        // again
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
+        lua_pushstring(L, strerror(errno));
+        return 2;
+
+    default:
+        lua_pushinteger(L, rv);
+        return 1;
+    }
 }
 
 static int writev_lua(lua_State *L)
 {
-    lua_iovec_t *iov = lauxh_checkudata(L, 1, IOVEC_MT);
-    int fd           = lauxh_checkinteger(L, 2);
-    uint64_t offset  = lauxh_optuint64(L, 3, 0);
-    uint64_t nb      = lauxh_optuint64(L, 4, iov->nbyte);
+    lua_iovec_t *iov          = lauxh_checkudata(L, 1, IOVEC_MT);
+    int fd                    = lauxh_checkinteger(L, 2);
+    uint64_t offset           = lauxh_optuint64(L, 3, 0);
+    uint64_t nb               = lauxh_optuint64(L, 4, 0);
+    struct iovec vec[IOV_MAX] = {0};
+    int nvec                  = IOV_MAX;
+    ssize_t rv                = 0;
 
-    return lua_iovec_writev(L, fd, iov, offset, nb);
+    nb = lua_iovec_setv(iov, vec, &nvec, offset, nb);
+    rv = writev(fd, vec, nvec);
+    switch (rv) {
+    // got error
+    case -1:
+        // again
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            lua_pushinteger(L, 0);
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
+        // closed by peer
+        else if (errno == EPIPE || errno == ECONNRESET) {
+            return 0;
+        }
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(errno));
+        return 2;
+
+    default:
+        lua_pushinteger(L, rv);
+        lua_pushnil(L);
+        lua_pushboolean(L, nb - (size_t)rv);
+        return 3;
+    }
 }
 
 static int consume_lua(lua_State *L)
@@ -312,14 +365,7 @@ static int gc_lua(lua_State *L)
 
 static int new_lua(lua_State *L)
 {
-    lua_iovec_t *iov = lua_newuserdata(L, sizeof(lua_iovec_t));
-
-    iov->nbyte = 0;
-    iov->th    = lua_newthread(L);
-    iov->ref   = lauxh_ref(L);
-    lauxh_setmetatable(L, IOVEC_MT);
-
-    return 1;
+    return lua_iovec_new(L);
 }
 
 LUALIB_API int luaopen_iovec(lua_State *L)
