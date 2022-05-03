@@ -35,7 +35,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 // lualib
-#include "lauxhlib.h"
+#include <lauxhlib.h>
 
 #if !defined(IOV_MAX)
 # define IOV_MAX 1024

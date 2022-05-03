@@ -83,11 +83,11 @@ function testcase.iovec_addn()
     end)
     assert.match(err, 'got less than 1')
 
-    -- test that error occurs with non-number argument
+    -- test that error occurs with non-integer argument
     err = assert.throws(function()
         v:addn('foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 
     -- test that returns false if no buffer space available
     local nbyte = 0
@@ -166,11 +166,11 @@ function testcase.iovec_get()
         assert.is_nil(v:get(i))
     end
 
-    -- test that error occurs with non-number argument
+    -- test that error occurs with non-integer argument
     local err = assert.throws(function()
         v:get('foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 end
 
 function testcase.iovec_del()
@@ -206,11 +206,11 @@ function testcase.iovec_del()
     assert.equal(#v, 0)
     assert.equal(v:bytes(), 0)
 
-    -- test that error occurs with non-number argument
+    -- test that error occurs with non-integer argument
     local err = assert.throws(function()
         v:del('foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 end
 
 function testcase.iovec_concat()
@@ -265,11 +265,11 @@ function testcase.iovec_consume()
     assert.equal(v:consume(100), 0)
     assert.equal(#v, 0)
 
-    -- test that error occurs with non-number argument
+    -- test that error occurs with non-integer argument
     local err = assert.throws(function()
         v:consume('foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 end
 
 function testcase.iovec_writev()
@@ -351,23 +351,23 @@ function testcase.iovec_writev()
     assert.is_nil(n)
     assert(err, 'writev() did not returns err')
 
-    -- test that error occurs with non-number fd argument
+    -- test that error occurs with non-integer fd argument
     err = assert.throws(function()
         v:writev('foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 
-    -- test that error occurs with non-number offset argument
+    -- test that error occurs with non-integer offset argument
     err = assert.throws(function()
         v:writev(123, 'foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 
-    -- test that error occurs with non-number nbyte argument
+    -- test that error occurs with non-integer nbyte argument
     err = assert.throws(function()
         v:writev(123, 0, 'foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 end
 
 function testcase.iovec_readv()
@@ -412,22 +412,22 @@ function testcase.iovec_readv()
         v:readv(r:fd()),
     })
 
-    -- test that error occurs with non-number fd argument
+    -- test that error occurs with non-integer fd argument
     err = assert.throws(function()
         v:readv('foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 
-    -- test that error occurs with non-number offset argument
+    -- test that error occurs with non-integer offset argument
     err = assert.throws(function()
         v:readv(123, 'foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 
-    -- test that error occurs with non-number nbyte argument
+    -- test that error occurs with non-integer nbyte argument
     err = assert.throws(function()
         v:readv(123, 0, 'foo')
     end)
-    assert.match(err, 'number expected, ')
+    assert.match(err, 'integer expected, ')
 end
 
