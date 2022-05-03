@@ -1,4 +1,3 @@
-rockspec_format = "3.0"
 package = "iovec"
 version = "scm-1"
 source = {
@@ -15,11 +14,21 @@ dependencies = {
     "lauxhlib >= 0.3.1",
 }
 build = {
-    type = "builtin",
-    modules = {
-        iovec = {
-            incdirs = { "deps/lauxhlib" },
-            sources = { "src/iovec.c" }
-        },
+    type = "make",
+    build_variables = {
+        PACKAGE         = "iovec",
+        CFLAGS          = "$(CFLAGS)",
+        WARNINGS        = "-Wall -Wno-trigraphs -Wmissing-field-initializers -Wreturn-type -Wmissing-braces -Wparentheses -Wno-switch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare",
+        CPPFLAGS        = "-I$(LUA_INCDIR)",
+        LDFLAGS         = "$(LIBFLAG)",
+        LIB_EXTENSION   = "$(LIB_EXTENSION)",
+        IOVEC_COVERAGE  = "$(IOVEC_COVERAGE)",
+    },
+    install_variables = {
+        PACKAGE         = "iovec",
+        LIB_EXTENSION   = "$(LIB_EXTENSION)",
+        CONFDIR         = '$(CONFDIR)',
+        LIBDIR          = "$(LIBDIR)",
+        LUA_INCDIR      = '$(LUA_INCDIR)',
     }
 }

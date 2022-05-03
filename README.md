@@ -1,31 +1,28 @@
 # lua-iovec
 
 [![test](https://github.com/mah0x211/lua-iovec/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-iovec/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/mah0x211/lua-iovec/branch/master/graph/badge.svg)](https://codecov.io/gh/mah0x211/lua-iovec)
 
 Vectored I/O module
 
 **NOTE: Do not use this module. this module is under heavy development.**
 
 
-## Dependencies
-
-- lauxhlib: <https://github.com/mah0x211/lauxhlib>
-
-
 ## Installation
 
 ```bash
-$ luarocks install iovec --from=http://mah0x211.github.io/rocks/
+$ luarocks install iovec
 ```
+
+this module install the `lua_iovec.h` to `CONFDIR` and creates a symbolic link in `LUA_INCDIR`.
+
 
 ## Constants
 
 - `iovec.IOV_MAX`: maximum size of an iovec.
 
 
-## Functions
-
-### iov = iovec.new()
+## iov = iovec.new()
 
 create an instance of iovec.
 
@@ -36,12 +33,7 @@ create an instance of iovec.
 - `iov:iovec`: instance of [iovec](#iovec-instance-methods).
 
 
-## iovec Instance Methods
-
-`iovec` instance has following methods.
-
-
-### nbyte = iov:bytes()
+## nbyte = iov:bytes()
 
 get a number of bytes used.
 
@@ -50,7 +42,7 @@ get a number of bytes used.
 - `nbyte:integer`: number of bytes used.
 
 
-### idx, err = iov:add( str )
+## idx, err = iov:add( str )
 
 add an element with specified string.
 
@@ -67,7 +59,7 @@ add an element with specified string.
 - `err:string`: error string.
 
 
-### idx, err = iov:addn( nbyte )
+## idx, err = iov:addn( nbyte )
 
 add an element that size of specified number of bytes.
 
@@ -83,7 +75,7 @@ add an element that size of specified number of bytes.
 - `err:string`: error string
 
 
-### ok, err = iov:set( str, idx )
+## ok, err = iov:set( str, idx )
 
 replace a string of element at specified index.
 
@@ -98,7 +90,7 @@ replace a string of element at specified index.
 - `err:string`: error string if stack memory cannot be increased.
 
 
-### str = iov:get( idx )
+## str = iov:get( idx )
 
 get a string of element at specified index.
 
@@ -110,7 +102,7 @@ get a string of element at specified index.
 - `str:string`: string of element.
 
 
-### str, err = iov:del( idx )
+## str, err = iov:del( idx )
 
 delete an element at specified index.
 
@@ -123,7 +115,7 @@ delete an element at specified index.
 - `str:string`: string of deleted element.
 
 
-### str, err = iov:concat( [offset, [, nbyte]])
+## str, err = iov:concat( [offset, [, nbyte]])
 
 concatenate all data of elements in use into a string.
 
@@ -138,7 +130,7 @@ concatenate all data of elements in use into a string.
 - `err:string`: error string if stack memory cannot be increased.
 
 
-### nbyte = iov:consume( nbyte )
+## nbyte = iov:consume( nbyte )
 
 delete the specified number of bytes of data.
 
@@ -151,7 +143,7 @@ delete the specified number of bytes of data.
 - `nbyte:integer`: number of bytes used.
 
 
-### nbyte, err, again = iov:writev( fd [, offset, [, nbyte]] )
+## nbyte, err, again = iov:writev( fd [, offset, [, nbyte]] )
 
 write iovec messages at once to fd.
 
@@ -170,7 +162,7 @@ write iovec messages at once to fd.
 **NOTE:** all return values will be nil if closed by peer.
 
 
-### nbyte, err, again = iov:readv( fd [, offset, [, nbyte]] )
+## nbyte, err, again = iov:readv( fd [, offset, [, nbyte]] )
 
 read the messages from fd into iovec.
 
@@ -187,3 +179,32 @@ read the messages from fd into iovec.
 - `again:bool`: `true` if all data has not been sent.
 
 **NOTE:** all return values will be nil if closed by peer.
+
+
+## Use from C module
+
+the `iovec` module installs `lua_iovec.h` in the lua include directory.
+
+the following API can be used to create an iovec object.
+
+
+### void lua_iovec_loadlib( lua_State *L, int level )
+
+load the lua-iovec module.  
+
+**NOTE:** you must call this API at least once before using the following API.
+
+
+### int lua_iovec_new( lua_State *L )
+
+create a new `iovec` object on the stack that equivalent to `iovec.new()` function.
+
+
+### size_t lua_iovec_setv( lua_iovec_t *iov, struct iovec *vec, int *nvec, size_t offset, size_t nbyte )
+
+sets the buffers that held by `*iov` to `*vec` and returns the number of bytes set.
+
+- `*nvec` must be set to length of `*vec`, and if it is `NULL` or `0`, it will return `0` without changing anything.
+- `offset` specifies the starting position of the buffer. if it is greater than or equal to the number of bytes held by `*iov`, it returns `0` without changing anything.
+- `nbyte` specifies the number of bytes to be set for `*vec`. if it is `0`, it set all data.
+
