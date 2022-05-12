@@ -3,6 +3,7 @@ require('nosigpipe')
 local pipe = require('pipe')
 local iovec = require('iovec')
 local testcase = require('testcase')
+local errno = require('errno')
 
 function testcase.new()
     -- test that returns an instance of iovec
@@ -36,6 +37,17 @@ function testcase.iovec_add()
     assert(err, 'iov:add() did not returns error')
     assert.equal(#v, 2)
     assert.equal(v:bytes(), 6)
+
+    -- test that return error if too many items
+    v = iovec.new()
+    for _ = 1, 4096 do
+        _, err = v:add('a')
+        if err then
+            assert.equal(err.type, errno.ENOBUFS)
+            break
+        end
+    end
+    assert(#v < 4096)
 
     -- test that error occurs with non-string argument
     err = assert.throws(function()
@@ -76,6 +88,17 @@ function testcase.iovec_addn()
     assert.equal(#v, 2)
     assert.equal(v:bytes(), 12)
     assert.equal(#v:get(idx), 9)
+
+    -- test that return error if too many items
+    v = iovec.new()
+    for _ = 1, 4096 do
+        _, err = v:addn(1)
+        if err then
+            assert.equal(err.type, errno.ENOBUFS)
+            break
+        end
+    end
+    assert(#v < 4096)
 
     -- test that error occurs with n<=0
     err = assert.throws(function()
@@ -327,10 +350,12 @@ function testcase.iovec_writev()
     local total = 0
     while true do
         -- luacheck: ignore n
-        local n, err, again = v:writev(w:fd())
-        if again then
-            assert(not err, err)
-            break
+        local n, err = v:writev(w:fd())
+        if err then
+            if err.code == errno.EAGAIN.code then
+                break
+            end
+            error(err)
         end
         assert.equal(n, 4096)
         assert(not err, err)
@@ -338,18 +363,17 @@ function testcase.iovec_writev()
     end
     assert(w:nonblock(false))
 
-    -- test that returns nil if closed by peer
+    -- test that returns 0 and err if closed by peer
     r:close()
-    local res = {
-        v:writev(w:fd()),
-    }
-    assert.equal(#res, 0)
+    n, err = v:writev(w:fd())
+    assert.is_nil(n)
+    assert.equal(err.type, errno.EPIPE)
 
     -- test that returns error
     w:close()
     n, err = v:writev(w:fd())
     assert.is_nil(n)
-    assert(err, 'writev() did not returns err')
+    assert(err.type, errno.EBADF)
 
     -- test that error occurs with non-integer fd argument
     err = assert.throws(function()
@@ -411,6 +435,11 @@ function testcase.iovec_readv()
     assert.empty({
         v:readv(r:fd()),
     })
+
+    -- test that returns error if fd is invalid
+    n, err = v:readv(123456789)
+    assert.is_nil(n)
+    assert.equal(err.type, errno.EBADF)
 
     -- test that error occurs with non-integer fd argument
     err = assert.throws(function()
