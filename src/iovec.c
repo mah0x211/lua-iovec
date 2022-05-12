@@ -26,6 +26,7 @@
  */
 
 #include "lua_iovec.h"
+#include <lua_errno.h>
 
 static int readv_lua(lua_State *L)
 {
@@ -40,20 +41,15 @@ static int readv_lua(lua_State *L)
     lua_iovec_setv(iov, vec, &nvec, offset, nb);
     rv = readv(fd, vec, nvec);
     switch (rv) {
-    // closed by peer
     case 0:
+        // closed by peer
         return 0;
 
-    // got error
     case -1:
+        // got error
         lua_pushnil(L);
-        // again
-        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-            lua_pushnil(L);
-            lua_pushboolean(L, 1);
-            return 3;
-        }
-        lua_pushstring(L, strerror(errno));
+        // again: errno == EAGAIN || EWOULDBLOCK || EINTR
+        lua_errno_new(L, errno, "readv");
         return 2;
 
     default:
@@ -75,28 +71,17 @@ static int writev_lua(lua_State *L)
     nb = lua_iovec_setv(iov, vec, &nvec, offset, nb);
     rv = writev(fd, vec, nvec);
     switch (rv) {
-    // got error
     case -1:
-        // again
-        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-            lua_pushinteger(L, 0);
-            lua_pushnil(L);
-            lua_pushboolean(L, 1);
-            return 3;
-        }
-        // closed by peer
-        else if (errno == EPIPE || errno == ECONNRESET) {
-            return 0;
-        }
+        // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        // again: errno == EAGAIN || EWOULDBLOCK || EINTR
+        // closed by peer: errno == EPIPE || ECONNRESET
+        lua_errno_new(L, errno, "writev");
         return 2;
 
     default:
         lua_pushinteger(L, rv);
-        lua_pushnil(L);
-        lua_pushboolean(L, nb - (size_t)rv);
-        return 3;
+        return 1;
     }
 }
 
@@ -164,7 +149,8 @@ static int concat_lua(lua_State *L)
         return 1;
     } else if (!lua_checkstack(L, top)) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(ENOMEM));
+        errno = ENOMEM;
+        lua_errno_new(L, errno, "concat");
         return 2;
     }
 
@@ -259,7 +245,8 @@ static int set_lua(lua_State *L)
         return 1;
     } else if (!lua_checkstack(iov->th, 1)) {
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(ENOMEM));
+        errno = ENOMEM;
+        lua_errno_new(L, errno, "concat");
         return 2;
     }
 
@@ -286,11 +273,13 @@ static int addn_lua(lua_State *L)
 
     if (top >= IOV_MAX) {
         lua_pushinteger(L, -1);
-        lua_pushstring(L, strerror(ENOBUFS));
+        errno = ENOBUFS;
+        lua_errno_new(L, errno, "concat");
         return 2;
     } else if (!lua_checkstack(iov->th, 1)) {
         lua_pushinteger(L, -2);
-        lua_pushstring(L, strerror(ENOMEM));
+        errno = ENOMEM;
+        lua_errno_new(L, errno, "addn");
         return 2;
     }
 
@@ -314,15 +303,18 @@ static int add_lua(lua_State *L)
 
     if (len == 0) {
         lua_pushinteger(L, -3);
-        lua_pushstring(L, strerror(EINVAL));
+        errno = EINVAL;
+        lua_errno_new(L, errno, "add");
         return 2;
     } else if (top >= IOV_MAX) {
         lua_pushinteger(L, -1);
-        lua_pushstring(L, strerror(ENOBUFS));
+        errno = ENOBUFS;
+        lua_errno_new(L, errno, "add");
         return 2;
     } else if (!lua_checkstack(iov->th, 1)) {
         lua_pushinteger(L, -2);
-        lua_pushstring(L, strerror(ENOMEM));
+        errno = ENOMEM;
+        lua_errno_new(L, errno, "add");
         return 2;
     }
 
@@ -370,6 +362,8 @@ static int new_lua(lua_State *L)
 
 LUALIB_API int luaopen_iovec(lua_State *L)
 {
+    lua_errno_loadlib(L);
+
     // create metatable
     if (luaL_newmetatable(L, IOVEC_MT)) {
         struct luaL_Reg mmethod[] = {

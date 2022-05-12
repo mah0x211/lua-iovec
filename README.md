@@ -22,6 +22,11 @@ this module install the `lua_iovec.h` to `CONFDIR` and creates a symbolic link i
 - `iovec.IOV_MAX`: maximum size of an iovec.
 
 
+## Error Handling
+
+the following functions return the `error` object created by https://github.com/mah0x211/lua-errno module.
+
+
 ## iov = iovec.new()
 
 create an instance of iovec.
@@ -56,7 +61,7 @@ add an element with specified string.
   - `-1`: no buffer space available
   - `-2`: stack memory cannot be increased
   - `-3`: empty string cannot be added
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ## idx, err = iov:addn( nbyte )
@@ -72,7 +77,7 @@ add an element that size of specified number of bytes.
 - `idx:integer`: positive index number of added element. or the following negative index number;
   - `-1`: no buffer space available
   - `-2`: stack memory cannot be increased
-- `err:string`: error string
+- `err:error`: error object.
 
 
 ## ok, err = iov:set( str, idx )
@@ -87,7 +92,7 @@ replace a string of element at specified index.
 **Returns**
 
 - `ok:boolean`: `true` on success, `false` on the specified index does not exist.
-- `err:string`: error string if stack memory cannot be increased.
+- `err:object`: error object if stack memory cannot be increased.
 
 
 ## str = iov:get( idx )
@@ -102,7 +107,7 @@ get a string of element at specified index.
 - `str:string`: string of element.
 
 
-## str, err = iov:del( idx )
+## str = iov:del( idx )
 
 delete an element at specified index.
 
@@ -127,7 +132,7 @@ concatenate all data of elements in use into a string.
 **Returns**
 
 - `str:string`: string.
-- `err:string`: error string if stack memory cannot be increased.
+- `err:error`: error object if stack memory cannot be increased.
 
 
 ## nbyte = iov:consume( nbyte )
@@ -143,42 +148,38 @@ delete the specified number of bytes of data.
 - `nbyte:integer`: number of bytes used.
 
 
-## nbyte, err, again = iov:writev( fd [, offset, [, nbyte]] )
+## n, err = iov:writev( fd [, offset, [, nbyte]] )
 
 write iovec messages at once to fd.
 
 **Parameters**
 
 - `fd:integer`: file descriptor.
-- `offset:integer`: start position of the data to be sent.
-- `nbyte:integer`: number of bytes to send.
+- `offset:integer`: start position of the data to be written.
+- `nbyte:integer`: number of bytes to write.
 
 **Returns**
 
-- `nbyte:integer`: the number of bytes sent.
-- `err:string`: error string.
-- `again:bool`: `true` if all data has not been sent.
-
-**NOTE:** all return values will be nil if closed by peer.
+- `n:integer`: the number of bytes written.
+- `err:error`: error object.
 
 
-## nbyte, err, again = iov:readv( fd [, offset, [, nbyte]] )
+## n, err = iov:readv( fd [, offset, [, nbyte]] )
 
 read the messages from fd into iovec.
 
 **Parameters**
 
 - `fd:integer`: file descriptor.
-- `offset:integer`: insertion position of received data.
-- `nbyte:integer`: maximum number of bytes to be received.
+- `offset:integer`: insertion position of read data.
+- `nbyte:integer`: maximum number of bytes to be read.
 
 **Returns**
 
-- `nbyte:integer`: the number of bytes received.
-- `err:string`: error string.
-- `again:bool`: `true` if all data has not been sent.
+- `n:integer`: the number of bytes read.
+- `err:error`: error object.
 
-**NOTE:** all return values will be nil if closed by peer.
+**NOTE:** all return values will be `nil` if `readv` is returned `0`.
 
 
 ## Use from C module
