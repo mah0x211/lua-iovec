@@ -48,7 +48,12 @@ static int readv_lua(lua_State *L)
     case -1:
         // got error
         lua_pushnil(L);
-        // again: errno == EAGAIN || EWOULDBLOCK || EINTR
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            // again
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
         lua_errno_new(L, errno, "readv");
         return 2;
 
@@ -72,16 +77,25 @@ static int writev_lua(lua_State *L)
     rv = writev(fd, vec, nvec);
     switch (rv) {
     case -1:
-        // got error
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            // again
+            lua_pushinteger(L, 0);
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        } else if (errno == EPIPE) {
+            // closed by peer
+            return 0;
+        }
         lua_pushnil(L);
-        // again: errno == EAGAIN || EWOULDBLOCK || EINTR
-        // closed by peer: errno == EPIPE || ECONNRESET
         lua_errno_new(L, errno, "writev");
         return 2;
 
     default:
         lua_pushinteger(L, rv);
-        return 1;
+        lua_pushnil(L);
+        lua_pushboolean(L, nb - (size_t)rv);
+        return 3;
     }
 }
 
