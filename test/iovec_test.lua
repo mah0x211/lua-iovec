@@ -309,38 +309,34 @@ function testcase.iovec_writev()
     local r, w, err = pipe()
     assert(not err, err)
 
-    -- luacheck: ignore err
     -- test that writes all data to fd
-    local n, err = v:writev(w:fd())
+    local n, again
+    n, err, again = v:writev(w:fd())
     assert.equal(n, 9)
-    assert(not err, err)
-    local s, err = r:read()
-    assert.equal(s, 'foobarbaz')
-    assert(not err, err)
+    assert.is_nil(err)
+    assert.is_false(again)
+    assert.equal(r:read(), 'foobarbaz')
 
     -- test that writes data after first 5-byte to fd
-    n, err = v:writev(w:fd(), 5)
+    n, err, again = v:writev(w:fd(), 5)
     assert.equal(n, 4)
-    assert(not err, err)
-    s, err = r:read()
-    assert.equal(s, 'rbaz')
-    assert(not err, err)
+    assert.is_nil(err)
+    assert.is_false(again)
+    assert.equal(r:read(), 'rbaz')
 
     -- test that writes data after first 5-byte limit 1-byte to fd
-    n, err = v:writev(w:fd(), 5, 1)
+    n, err, again = v:writev(w:fd(), 5, 1)
     assert.equal(n, 1)
-    assert(not err, err)
-    s, err = r:read()
-    assert.equal(s, 'r')
-    assert(not err, err)
+    assert.is_nil(err)
+    assert.is_false(again)
+    assert.equal(r:read(), 'r')
 
     -- test that writes data limit 4-byte to fd
-    n, err = v:writev(w:fd(), nil, 4)
+    n, err, again = v:writev(w:fd(), nil, 4)
     assert.equal(n, 4)
-    assert(not err, err)
-    s, err = r:read()
-    assert.equal(s, 'foob')
-    assert(not err, err)
+    assert.is_nil(err)
+    assert.is_false(again)
+    assert.equal(r:read(), 'foob')
 
     -- test that returns again=true if the data written reaches to
     -- maximum buffer size
@@ -349,30 +345,29 @@ function testcase.iovec_writev()
     w:nonblock(true)
     local total = 0
     while true do
-        -- luacheck: ignore n
-        local n, err = v:writev(w:fd())
-        if err then
-            if err.code == errno.EAGAIN.code then
-                break
-            end
+        n, err, again = v:writev(w:fd())
+        if again then
+            break
+        elseif err then
             error(err)
         end
         assert.equal(n, 4096)
-        assert(not err, err)
         total = total + n
     end
     assert(w:nonblock(false))
 
     -- test that returns 0 and err if closed by peer
     r:close()
-    n, err = v:writev(w:fd())
+    n, err, again = v:writev(w:fd())
     assert.is_nil(n)
-    assert.equal(err.type, errno.EPIPE)
+    assert.is_nil(err)
+    assert.is_nil(again)
 
     -- test that returns error
     w:close()
-    n, err = v:writev(w:fd())
+    n, err, again = v:writev(w:fd())
     assert.is_nil(n)
+    assert.is_nil(again)
     assert(err.type, errno.EBADF)
 
     -- test that error occurs with non-integer fd argument
@@ -406,14 +401,18 @@ function testcase.iovec_readv()
         assert(not err, err)
     end
 
-    local r, w, err = pipe()
-    assert(not err, err)
+    local r, w, perr = pipe()
+    assert(not perr, perr)
     r:nonblock(true)
 
-    -- luacheck: ignore n
-    -- luacheck: ignore err
+    -- test that return again=true
+    local n, err, again = v:readv(r:fd())
+    assert.is_nil(n)
+    assert.is_nil(err)
+    assert.is_true(again)
+
     -- test that reads data from fd into buffer
-    local n = assert(w:write('hello world!'))
+    n = assert(w:write('hello world!'))
     assert.equal(v:readv(r:fd()), 12)
     assert.equal(v:concat(0, n), 'hello world!')
 

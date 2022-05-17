@@ -148,7 +148,7 @@ delete the specified number of bytes of data.
 - `nbyte:integer`: number of bytes used.
 
 
-## n, err = iov:writev( fd [, offset, [, nbyte]] )
+## n, err, again = iov:writev( fd [, offset, [, nbyte]] )
 
 write iovec messages at once to fd.
 
@@ -162,9 +162,12 @@ write iovec messages at once to fd.
 
 - `n:integer`: the number of bytes written.
 - `err:error`: error object.
+- `again:boolean`: `true` if `n` != #nbyte, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
+
+**NOTE:** all return values will be `nil` if `errno` is `EPIPE`.
 
 
-## n, err = iov:readv( fd [, offset, [, nbyte]] )
+## n, err, again = iov:readv( fd [, offset, [, nbyte]] )
 
 read the messages from fd into iovec.
 
@@ -178,6 +181,7 @@ read the messages from fd into iovec.
 
 - `n:integer`: the number of bytes read.
 - `err:error`: error object.
+- `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be `nil` if `readv` is returned `0`.
 
