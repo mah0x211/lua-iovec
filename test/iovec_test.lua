@@ -1,6 +1,4 @@
--- you must install 'mah0x11/nosigpipe' and 'mah0x211/pipe' modules
-require('nosigpipe')
-local pipe = require('pipe')
+local pipe = require('os.pipe')
 local iovec = require('iovec')
 local testcase = require('testcase')
 local errno = require('errno')
