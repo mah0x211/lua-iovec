@@ -53,8 +53,7 @@ jobs:
       run: |
         sudo apt install lcov -y
         luarocks install testcase
-        luarocks install mah0x211/pipe
-        luarocks install nosigpipe
+        luarocks install os-pipe
     -
       name: Install
       run: |
