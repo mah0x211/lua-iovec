@@ -1,6 +1,7 @@
 local pipe = require('os.pipe')
 local iovec = require('iovec')
 local testcase = require('testcase')
+local assert = require('assert')
 local errno = require('errno')
 
 function testcase.new()
@@ -378,13 +379,13 @@ function testcase.iovec_writev()
     err = assert.throws(function()
         v:writev(123, 'foo')
     end)
-    assert.match(err, 'integer expected, ')
+    assert.match(err, 'uint64_t expected, ')
 
     -- test that error occurs with non-integer nbyte argument
     err = assert.throws(function()
         v:writev(123, 0, 'foo')
     end)
-    assert.match(err, 'integer expected, ')
+    assert.match(err, 'uint64_t expected, ')
 end
 
 function testcase.iovec_readv()
@@ -448,12 +449,12 @@ function testcase.iovec_readv()
     err = assert.throws(function()
         v:readv(123, 'foo')
     end)
-    assert.match(err, 'integer expected, ')
+    assert.match(err, 'uint64_t expected, ')
 
     -- test that error occurs with non-integer nbyte argument
     err = assert.throws(function()
         v:readv(123, 0, 'foo')
     end)
-    assert.match(err, 'integer expected, ')
+    assert.match(err, 'uint64_t expected, ')
 end
 
