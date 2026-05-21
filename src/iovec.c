@@ -25,8 +25,8 @@
  * Created by Masatoshi Teruya on 18/06/11.
  */
 
+#include "lua_errno.h"
 #include "lua_iovec.h"
-#include <lua_errno.h>
 
 static int readv_lua(lua_State *L)
 {
