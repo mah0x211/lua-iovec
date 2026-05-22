@@ -35,7 +35,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 // lualib
-#include "lauxhlib.h"
+#include <lauxlib.h>
+#include <lua.h>
 
 #if !defined(IOV_MAX)
 # define IOV_MAX 1024
@@ -68,8 +69,9 @@ static inline int lua_iovec_new(lua_State *L)
 
     iov->nbyte = 0;
     iov->th    = lua_newthread(L);
-    iov->ref   = lauxh_ref(L);
-    lauxh_setmetatable(L, IOVEC_MT);
+    iov->ref   = luaL_ref(L, LUA_REGISTRYINDEX);
+    luaL_getmetatable(L, IOVEC_MT);
+    lua_setmetatable(L, -2);
 
     return 1;
 }

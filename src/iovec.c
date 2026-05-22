@@ -25,6 +25,7 @@
  * Created by Masatoshi Teruya on 18/06/11.
  */
 
+#include "lauxhlib.h"
 #include "lua_errno.h"
 #include "lua_iovec.h"
 
