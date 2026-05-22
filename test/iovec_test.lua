@@ -1,4 +1,4 @@
-local pipe = require('os.pipe')
+local socketpair = require('testcase.socketpair')
 local iovec = require('iovec')
 local testcase = require('testcase')
 local assert = require('assert')
@@ -305,11 +305,10 @@ function testcase.iovec_writev()
         assert(not err, err)
     end
 
-    local r, w, err = pipe()
-    assert(not err, err)
+    local r, w = assert(socketpair())
 
     -- test that writes all data to fd
-    local n, again
+    local n, err, again
     n, err, again = v:writev(w:fd())
     assert.equal(n, 9)
     assert.is_nil(err)
@@ -400,8 +399,7 @@ function testcase.iovec_readv()
         assert(not err, err)
     end
 
-    local r, w, perr = pipe()
-    assert(not perr, perr)
+    local r, w = assert(socketpair())
     r:nonblock(true)
 
     -- test that return again=true
